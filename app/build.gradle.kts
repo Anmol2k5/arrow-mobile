@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.clicky.app"
+    namespace = "com.clicky"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.clicky.app"
+        applicationId = "com.clicky"
         minSdk = 29
         targetSdk = 34
         versionCode = 1
@@ -57,6 +57,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

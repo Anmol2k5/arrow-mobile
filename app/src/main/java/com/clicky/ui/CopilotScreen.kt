@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,10 +41,10 @@ fun CopilotScreen() {
     var apiKey by remember { mutableStateOf("") }
     var isInitialized by remember { mutableStateOf(false) }
 
-    val status by controller.run {
-        initializeOverlays()
-        this@CopilotScreen.controller.status
-    }.collectAsState(initial = "Idle")
+    LaunchedEffect(Unit) {
+        controller.initializeOverlays()
+    }
+    val status by controller.status.collectAsState(initial = "Idle")
 
     Column(
         modifier = Modifier

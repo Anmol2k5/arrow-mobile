@@ -13,6 +13,8 @@ import com.clicky.overlay.PillOverlayView
 import com.clicky.screenshot.ScreenshotProvider
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
+import com.google.ai.client.generativeai.type.FunctionCallPart
+import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.defineFunction
@@ -127,7 +129,12 @@ class AgentLoop(
                 val combinedContent = content("function") {
                     for (call in toolCalls) {
                         val result = executeToolCall(call)
-                        functionResponse(call.name, result)
+                        part(
+                            FunctionResponsePart(
+                                name = call.name,
+                                response = org.json.JSONObject(result)
+                            )
+                        )
                         auditRepository.addEntry(
                             GuidanceAuditEntry(
                                 toolName = call.name,
@@ -148,7 +155,7 @@ class AgentLoop(
         }
     }
 
-    private suspend fun executeToolCall(call: com.google.ai.client.generativeai.type.FunctionCall): Map<String, Any> {
+    private suspend fun executeToolCall(call: FunctionCallPart): Map<String, Any> {
         return when (call.name) {
             "get_screen_context" -> {
                 _status.value = "Reading screen..."

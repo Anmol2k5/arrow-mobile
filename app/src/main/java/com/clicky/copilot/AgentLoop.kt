@@ -13,7 +13,6 @@ import com.clicky.overlay.PillOverlayView
 import com.clicky.screenshot.ScreenshotProvider
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
-import com.google.ai.client.generativeai.type.FunctionResponse
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.defineFunction
@@ -125,31 +124,21 @@ class AgentLoop(
                     break
                 }
 
-                val toolResponses = mutableListOf<Content>()
-                for (call in toolCalls) {
-                    val result = executeToolCall(call)
-                    toolResponses.add(
-                        Content(
-                            role = "function",
-                            parts = listOf(
-                                FunctionResponse(
-                                    name = call.name,
-                                    response = result
-                                )
+                val combinedContent = content("function") {
+                    for (call in toolCalls) {
+                        val result = executeToolCall(call)
+                        functionResponse(call.name, result)
+                        auditRepository.addEntry(
+                            GuidanceAuditEntry(
+                                toolName = call.name,
+                                parameters = call.args.mapValues { it.value.toString() },
+                                result = result.toString()
                             )
                         )
-                    )
-
-                    auditRepository.addEntry(
-                        GuidanceAuditEntry(
-                            toolName = call.name,
-                            parameters = call.args.mapValues { it.value.toString() },
-                            result = result.toString()
-                        )
-                    )
+                    }
                 }
 
-                response = chat.sendMessage(toolResponses)
+                response = chat.sendMessage(combinedContent)
             }
         } catch (e: Exception) {
             _status.value = "Error: ${e.message}"

@@ -12,6 +12,13 @@ import com.clicky.overlay.HighlightOverlayView
 import com.clicky.overlay.PillOverlayView
 import com.clicky.screenshot.ScreenshotProvider
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
 class GuidanceRuntimeController(private val context: Context) {
 
     private val nodeTreeRepository = NodeTreeRepository()
@@ -19,6 +26,11 @@ class GuidanceRuntimeController(private val context: Context) {
     private val auditRepository = GuidanceAuditRepository()
     private val screenshotProvider = ScreenshotProvider(context)
     private val overlayHost = AndroidOverlayHost(context)
+
+    private val _status = MutableStateFlow("Uninitialized")
+    val status: StateFlow<String> = _status.asStateFlow()
+
+    private val controllerScope = CoroutineScope(Dispatchers.Main)
 
     private lateinit var highlightOverlay: HighlightOverlayView
     private lateinit var pillOverlay: PillOverlayView
@@ -49,6 +61,10 @@ class GuidanceRuntimeController(private val context: Context) {
             auditRepository = auditRepository
         )
         agentLoop.initialize()
+        _status.value = "Idle"
+        controllerScope.launch {
+            agentLoop.status.collect { s -> _status.value = s }
+        }
     }
 
     fun isAccessibilityServiceEnabled(): Boolean {

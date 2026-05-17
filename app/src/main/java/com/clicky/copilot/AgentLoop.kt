@@ -126,9 +126,14 @@ class AgentLoop(
                     break
                 }
 
+                val toolResults = mutableListOf<Pair<FunctionCallPart, Map<String, Any>>>()
+                for (call in toolCalls) {
+                    val result = executeToolCall(call)
+                    toolResults.add(call to result)
+                }
+
                 val combinedContent = content("function") {
-                    for (call in toolCalls) {
-                        val result = executeToolCall(call)
+                    for ((call, result) in toolResults) {
                         part(
                             FunctionResponsePart(
                                 name = call.name,

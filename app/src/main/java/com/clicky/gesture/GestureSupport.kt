@@ -1,72 +1,62 @@
 package com.clicky.gesture
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
 import android.graphics.Path
-import android.os.Build
-import android.view.MotionEvent
+import android.graphics.PointF
 import android.view.accessibility.AccessibilityNodeInfo
 
 class GestureSupport(private val service: AccessibilityService) {
 
     private var gestureInProgress = false
 
-    fun performClick(x: Int, y: Int, duration: Long = 100): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val path = Path().apply {
-                moveTo(x.toFloat(), y.toFloat())
-            }
-            return service.dispatchGesture(
-                android.view.accessibility.AccessibilityGestureEvent(
-                    MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, x.toFloat(), y.toFloat(), 0),
-                    path,
-                    null,
-                    0
-                ),
-                null,
-                null
-            )
+    fun performClick(x: Int, y: Int, durationMs: Long = 100): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N) {
+            return false
         }
-        return false
+
+        val path = Path().apply {
+            moveTo(x.toFloat(), y.toFloat())
+        }
+
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, durationMs))
+            .build()
+
+        return service.dispatchGesture(gesture, null, null)
     }
 
     fun performLongClick(x: Int, y: Int): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val path = Path().apply {
-                moveTo(x.toFloat(), y.toFloat())
-            }
-            val downEvent = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, x.toFloat(), y.toFloat(), 0)
-            return service.dispatchGesture(
-                android.view.accessibility.AccessibilityGestureEvent(
-                    downEvent,
-                    path,
-                    null,
-                    AccessibilityService.GESTURE_LONG_CLICK
-                ),
-                null,
-                null
-            )
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N) {
+            return false
         }
-        return false
+
+        val path = Path().apply {
+            moveTo(x.toFloat(), y.toFloat())
+        }
+
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 500))
+            .build()
+
+        return service.dispatchGesture(gesture, null, null)
     }
 
     fun performSwipe(startX: Int, startY: Int, endX: Int, endY: Int, durationMs: Long = 300): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val path = Path().apply {
-                moveTo(startX.toFloat(), startY.toFloat())
-                lineTo(endX.toFloat(), endY.toFloat())
-            }
-            return service.dispatchGesture(
-                android.view.accessibility.AccessibilityGestureEvent(
-                    MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, startX.toFloat(), startY.toFloat(), 0),
-                    path,
-                    null,
-                    durationMs.toInt()
-                ),
-                null,
-                null
-            )
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N) {
+            return false
         }
-        return false
+
+        val path = Path().apply {
+            moveTo(startX.toFloat(), startY.toFloat())
+            lineTo(endX.toFloat(), endY.toFloat())
+        }
+
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, durationMs))
+            .build()
+
+        return service.dispatchGesture(gesture, null, null)
     }
 
     fun swipeUp(distancePx: Int = 300, durationMs: Long = 300): Boolean {

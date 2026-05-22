@@ -1,5 +1,6 @@
 package com.clicky.copilot
 
+import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings

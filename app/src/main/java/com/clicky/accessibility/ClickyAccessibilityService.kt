@@ -18,6 +18,7 @@ class ClickyAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        instance = this
         serviceInfo = AccessibilityServiceInfo().apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
@@ -50,4 +51,9 @@ class ClickyAccessibilityService : AccessibilityService() {
     }
 
     fun getCurrentNodeTree(): List<AccessibilityNodeSnapshot> = _nodeTreeFlow.value
+
+    companion object {
+        var instance: ClickyAccessibilityService? = null
+            private set
+    }
 }

@@ -5,12 +5,15 @@ import android.content.Intent
 import android.provider.Settings
 import com.clicky.accessibility.ClickyAccessibilityService
 import com.clicky.accessibility.NodeTreeRepository
+import com.clicky.gesture.GestureSupport
 import com.clicky.memory.GuidanceAuditRepository
 import com.clicky.memory.ScreenMemoryRepository
 import com.clicky.overlay.AndroidOverlayHost
 import com.clicky.overlay.HighlightOverlayView
 import com.clicky.overlay.PillOverlayView
 import com.clicky.screenshot.ScreenshotProvider
+import com.clicky.voice.TextToSpeechManager
+import com.clicky.voice.VoiceInputManager
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +39,10 @@ class GuidanceRuntimeController(private val context: Context) {
     private lateinit var pillOverlay: PillOverlayView
     private lateinit var agentLoop: AgentLoop
 
+    private lateinit var gestureSupport: GestureSupport
+    private lateinit var ttsManager: TextToSpeechManager
+    private lateinit var voiceInputManager: VoiceInputManager
+
     fun initializeOverlays() {
         highlightOverlay = HighlightOverlayView(context)
         pillOverlay = PillOverlayView(context)
@@ -47,6 +54,14 @@ class GuidanceRuntimeController(private val context: Context) {
             height = android.view.WindowManager.LayoutParams.WRAP_CONTENT,
             gravity = android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL
         )
+
+        gestureSupport = GestureSupport(getAccessibilityService()!!)
+        ttsManager = TextToSpeechManager(context)
+        voiceInputManager = VoiceInputManager(context)
+    }
+
+    private fun getAccessibilityService(): AccessibilityService? {
+        return ClickyAccessibilityService.instance
     }
 
     fun initializeAgent(apiKey: String) {
@@ -58,7 +73,10 @@ class GuidanceRuntimeController(private val context: Context) {
             highlightOverlay = highlightOverlay,
             pillOverlay = pillOverlay,
             screenMemoryRepository = screenMemoryRepository,
-            auditRepository = auditRepository
+            auditRepository = auditRepository,
+            gestureSupport = if (::gestureSupport.isInitialized) gestureSupport else null,
+            ttsManager = if (::ttsManager.isInitialized) ttsManager else null,
+            voiceInputManager = if (::voiceInputManager.isInitialized) voiceInputManager else null
         )
         agentLoop.initialize()
         _status.value = "Idle"
@@ -106,5 +124,57 @@ class GuidanceRuntimeController(private val context: Context) {
     fun cleanup() {
         stop()
         screenshotProvider.release()
+        if (::ttsManager.isInitialized) ttsManager.destroy()
+        if (::voiceInputManager.isInitialized) voiceInputManager.destroy()
+    }
+
+    fun setLanguage(languageCode: String) {
+        if (::agentLoop.isInitialized) {
+            agentLoop.setLanguage(languageCode)
+        }
+    }
+
+    fun speak(text: String) {
+        if (::ttsManager.isInitialized) {
+            ttsManager.speak(text)
+        }
+    }
+
+    fun stopSpeaking() {
+        if (::ttsManager.isInitialized) {
+            ttsManager.stop()
+        }
+    }
+
+    fun startVoiceInput() {
+        if (::voiceInputManager.isInitialized) {
+            voiceInputManager.startListening()
+        }
+    }
+
+    fun getVoiceInputState() = if (::voiceInputManager.isInitialized) voiceInputManager.state else null
+
+    fun getTranscript() = if (::voiceInputManager.isInitialized) voiceInputManager.transcript else null
+
+    fun stopVoiceInput() {
+        if (::voiceInputManager.isInitialized) {
+            voiceInputManager.stopListening()
+        }
+    }
+
+    fun getSupportedLanguages(): Map<String, java.util.Locale> {
+        return if (::ttsManager.isInitialized) {
+            ttsManager.getSupportedLanguages()
+        } else {
+            emptyMap()
+        }
+    }
+
+    fun isVoiceInputAvailable(): Boolean {
+        return if (::voiceInputManager.isInitialized) {
+            voiceInputManager.isAvailable()
+        } else {
+            false
+        }
     }
 }

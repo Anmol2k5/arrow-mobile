@@ -10,8 +10,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
-import kotlin.io.encoding.Base64 as KotlinBase64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 data class AgentStatus(
     val status: String,
@@ -138,7 +136,6 @@ class WindowsAgentClient(
         }
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
     suspend fun captureScreenshot(quality: Int = 80): Result<Bitmap> = withContext(Dispatchers.IO) {
         try {
             val request = buildRequest("/screenshot?quality=$quality")
@@ -150,7 +147,7 @@ class WindowsAgentClient(
             val json = org.json.JSONObject(body)
             val b64 = json.optString("screenshot_b64", null)
                 ?: return@withContext Result.failure(Exception("No screenshot in response"))
-            val bytes = KotlinBase64.decode(b64)
+            val bytes = Base64.decode(b64, Base64.DEFAULT)
             val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 ?: return@withContext Result.failure(Exception("Failed to decode screenshot"))
             Result.success(bitmap)
